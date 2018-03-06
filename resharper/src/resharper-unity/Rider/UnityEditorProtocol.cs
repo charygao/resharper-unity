@@ -35,7 +35,7 @@ namespace JetBrains.ReSharper.Plugins.Unity.Rider
         private readonly ISolution mySolution;
 
         private readonly IProperty<UnityModel> myUnityModel;
-
+        
         public readonly ISignal<UnityModel> Refresh = new DataFlow.Signal<UnityModel>("Refresh");
         private readonly ReadonlyToken myReadonlyToken = new ReadonlyToken("unityModelReadonlyToken");
 
@@ -51,7 +51,8 @@ namespace JetBrains.ReSharper.Plugins.Unity.Rider
             myLocks = locks;
             mySolution = solution;
             mySessionLifetimes = new SequentialLifetimes(lifetime);
-            myUnityModel = new Property<UnityModel>(lifetime, "unityModelProperty", null).EnsureReadonly(myReadonlyToken).EnsureThisThread();
+            myUnityModel = new Property<UnityModel>(lifetime, "unityModelProperty", null)
+                .EnsureReadonly(myReadonlyToken).EnsureThisThread();
 
             if (solution.GetData(ProjectModelExtensions.ProtocolSolutionKey) == null)
                 return;
@@ -62,14 +63,11 @@ namespace JetBrains.ReSharper.Plugins.Unity.Rider
             // todo: consider non-Unity Solution with Unity-generated projects
             var protocolInstancePath = solFolder.Combine("Library/ProtocolInstance.json");
 
-            if (!protocolInstancePath.ExistsFile)
-                File.Create(protocolInstancePath.FullPath);
+            protocolInstancePath.Directory.CreateDirectory();
 
             var watcher = new FileSystemWatcher();
             watcher.Path = protocolInstancePath.Directory.FullPath;
-            watcher.NotifyFilter =
-                NotifyFilters.LastAccess |
-                NotifyFilters.LastWrite; //Watch for changes in LastAccess and LastWrite times
+            watcher.NotifyFilter = NotifyFilters.LastAccess | NotifyFilters.LastWrite;
             watcher.Filter = protocolInstancePath.Name;
 
             // Add event handlers.
